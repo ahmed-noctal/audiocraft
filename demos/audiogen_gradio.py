@@ -15,10 +15,26 @@ print("Model loaded successfully.")
 fixed_audio_path = os.path.join(os.getcwd(), "generated_audio")
 print(f"Fixed audio path: {fixed_audio_path}")
 
-def generate_audio(descriptions):
+def generate_audio(descriptions, duration):
+    """
+    Generate audio based on the provided descriptions and duration.
+
+    Args:
+        descriptions (str): A string containing audio descriptions, one per line.
+        duration (int): The duration in seconds for the generated audio.
+
+    Returns:
+        str: The file path of the generated audio file.
+
+    Raises:
+        ValueError: If no valid descriptions are provided or no audio is generated.
+        RuntimeError: If audio writing fails.
+        FileNotFoundError: If the audio file is not created successfully.
+    """
     try:
         print("Received descriptions:")
         print(descriptions)
+        print(f"Received duration: {duration}")
 
         # Split the input descriptions by line and remove any empty lines
         descriptions_list = [desc.strip() for desc in descriptions.strip().split("\n") if desc.strip()]
@@ -26,6 +42,9 @@ def generate_audio(descriptions):
 
         if not descriptions_list:
             raise ValueError("Please provide at least one valid description.")
+
+        # Set the generation parameters with the user-defined duration
+        model.set_generation_params(duration=duration)
 
         # Generate audio for each description
         print("Generating audio...")
@@ -71,6 +90,13 @@ def generate_audio(descriptions):
 with gr.Blocks() as demo:
     gr.Markdown("""
     # AudioGen Demo
+    Developed by Ahmed@Noctal using Audiocraft (Facebook).
+
+    **Properties:**
+    - **Model**: Open-source
+    - **Weights**: Retraining required with own large labeled dataset
+    - Considerations, better with single short description per line
+
     Enter descriptions for audio generation (one description per line). Only the first description will produce a fixed-named audio file.
     """)
 
@@ -79,6 +105,15 @@ with gr.Blocks() as demo:
             label="Descriptions (one per line)",
             placeholder="dog barking\nsirens of an emergency vehicle\nfootsteps in a corridor",
             lines=5
+        )
+
+    with gr.Row():
+        duration_input = gr.Slider(
+            label="Duration (seconds)",
+            minimum=1,
+            maximum=10,
+            value=5,
+            step=1
         )
 
     with gr.Row():
@@ -92,7 +127,7 @@ with gr.Blocks() as demo:
         )
 
     # Connect the button to the generate_audio function
-    generate_button.click(generate_audio, inputs=[description_input], outputs=[audio_output])
+    generate_button.click(generate_audio, inputs=[description_input, duration_input], outputs=[audio_output])
 
 # Launch the Gradio app
 demo.launch()
