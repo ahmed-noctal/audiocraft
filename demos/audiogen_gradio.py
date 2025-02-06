@@ -15,12 +15,13 @@ print("Model loaded successfully.")
 fixed_audio_path = os.path.join(os.getcwd(), "generated_audio")
 print(f"Fixed audio path: {fixed_audio_path}")
 
-def generate_audio(descriptions, duration):
+def generate_audio(descriptions, negative_prompt, duration):
     """
-    Generate audio based on the provided descriptions and duration.
+    Generate audio based on the provided descriptions, negative prompt, and duration.
 
     Args:
         descriptions (str): A string containing audio descriptions, one per line.
+        negative_prompt (str): Description of sounds to avoid in the generation.
         duration (int): The duration in seconds for the generated audio.
 
     Returns:
@@ -34,6 +35,7 @@ def generate_audio(descriptions, duration):
     try:
         print("Received descriptions:")
         print(descriptions)
+        print(f"Received negative prompt: {negative_prompt}")
         print(f"Received duration: {duration}")
 
         # Split the input descriptions by line and remove any empty lines
@@ -44,7 +46,7 @@ def generate_audio(descriptions, duration):
             raise ValueError("Please provide at least one valid description.")
 
         # Set the generation parameters with the user-defined duration
-        model.set_generation_params(duration=duration)
+        model.set_generation_params(duration=duration, negative_prompt=negative_prompt if negative_prompt.strip() else None)
 
         # Generate audio for each description
         print("Generating audio...")
@@ -108,6 +110,13 @@ with gr.Blocks() as demo:
         )
 
     with gr.Row():
+        negative_prompt_input = gr.Textbox(
+            label="Negative Prompt (what sounds to avoid)",
+            placeholder="background noise, static, echo",
+            lines=2
+        )
+
+    with gr.Row():
         duration_input = gr.Slider(
             label="Duration (seconds)",
             minimum=1,
@@ -127,7 +136,11 @@ with gr.Blocks() as demo:
         )
 
     # Connect the button to the generate_audio function
-    generate_button.click(generate_audio, inputs=[description_input, duration_input], outputs=[audio_output])
+    generate_button.click(
+        generate_audio, 
+        inputs=[description_input, negative_prompt_input, duration_input], 
+        outputs=[audio_output]
+    )
 
 # Launch the Gradio app
-demo.launch()
+demo.launch(server_port=7862)
